@@ -2,7 +2,7 @@
 
 import Form from "@/app/ui/recipes/create-form";
 
-export default async function Page() {
+export default  function Page() {
     return (
         <main>
             <Form />

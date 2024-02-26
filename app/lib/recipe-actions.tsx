@@ -152,3 +152,10 @@ export async function searchRecipes(recipes: RecipeData[], searchString: string)
       recipe.category.toLowerCase().includes(searchString.toLowerCase())
     );
   }
+
+  export function extractMiddleSegment(path: string): string {
+    const segments = path.split('/');
+    const filteredSegments = segments.filter(segment => segment.length >  0);
+    return filteredSegments[1];  
+  }
+  

@@ -25,7 +25,7 @@ var catigory =[
   ] 
   
 
-export default async function Home(){
+export default function Home(){
 
 
         const [recipeees, setRecipeees] = useState<RecipeData[]>([]);

@@ -1,24 +1,33 @@
 'use client'
 
 import { RecipeData } from "@/app/lib/definitions";
-import { getRecipe } from "@/app/lib/recipe-actions";
+import { extractMiddleSegment, getRecipe } from "@/app/lib/recipe-actions";
 import Form from "@/app/ui/recipes/edit-form";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 
-export function extractMiddleSegment(path: string): string {
-    const segments = path.split('/');
-    const filteredSegments = segments.filter(segment => segment.length >  0);
-    return filteredSegments[1];  
-  }
-  
+export default function Page() {
 
-export default async function Page() {
-
+   
+    const [recipeees, setRecipeees] = useState<RecipeData>();
     const pathname = usePathname();
-    const recipe : RecipeData = await getRecipe(extractMiddleSegment(pathname));
+
+
+    useEffect(() => {
+        
+        const fetchRecipes = async () => {
+            
+            const recipe : RecipeData = await getRecipe(extractMiddleSegment(pathname));
+          setRecipeees(recipe);
+        };
+    
+        fetchRecipes();
+      }, []);
+
+      if(recipeees)
     return (
         <main>
-            <Form recipe={recipe}/>
+            <Form recipe={recipeees}/>
             </main>
     );
 }
