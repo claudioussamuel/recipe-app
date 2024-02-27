@@ -1,3 +1,5 @@
+"use client"
+
 import { lusitana } from '@/app/ui/fonts';
 import {
   AtSymbolIcon,
@@ -7,11 +9,30 @@ import {
 import { ArrowRightIcon } from '@heroicons/react/20/solid';
 import { Button } from './button';
 import Link from 'next/link';
-import { createUser } from '../lib/actions';
+import { useRouter } from 'next/navigation'
+import { signUp } from '../lib/auth';
 
 export default function SingUpForm() {
+
+  const router = useRouter()
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const email = form.email.value;
+    const password = form.password.value;
+   
+    try {
+      await signUp(email, password);
+      router.push("/")
+    } catch (error) {
+      window.alert(error);
+    }
+  }
+
+
+
   return (
-    <form action={createUser} className="space-y-3">
+    <form onSubmit={handleSubmit} className="space-y-3">
       <div className="flex-1 rounded-lg bg-gray-50 px-6 pb-4 pt-8">
         <h1 className={`${lusitana.className} mb-3 text-2xl`}>
           Please create account to continue.
