@@ -7,12 +7,14 @@ import {
   BuildingStorefrontIcon, 
 } from '@heroicons/react/24/outline';
 import { Button } from '@/app/ui/button';
-import { storage } from "@/firebase/config";
+import { auth, storage } from "@/firebase/config";
 import { uploadBytesResumable,UploadTaskSnapshot ,ref, getDownloadURL} from "firebase/storage";
 import React, {ChangeEvent,useEffect,useState} from "react";
 import { useRouter } from 'next/navigation'
 import { addRecipe } from '@/app/lib/recipe-actions';
 import DashboardSkeleton from '../skeletons';
+import { useUser } from '@/app/lib/auth';
+import { onAuthStateChanged } from 'firebase/auth';
 
 
  
@@ -47,11 +49,26 @@ export default function Form() {
   const [fileName, setFileName] = useState('');
   const [checkedTags, setCheckedTags] = useState({});
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [userId, setUserId] = useState('');
+
+  useEffect(() => {
+    
+     const unsubscribe = onAuthStateChanged(auth, (user) => {
+       if (user) {
+         setUserId(user.uid); 
+       }
+     });
+ 
+     // Cleanup subscription on unmount
+     return () => unsubscribe();
+  }, []);
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     if(e.target.files && e.target.files[0]) {
       setImage(e.target.files[0]);
       setFileName(e.target.files[0].name);
+      setError('');
    
     }
   
@@ -102,31 +119,40 @@ const handleUpload = () => {
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const formData = new FormData(event.currentTarget);
-    const name = formData.get('name');
-    const ingredients = formData.get('ingredients');
-    const instructions = formData.get('instructions');
-    const time = formData.get('time');
-    const category = formData.get('category');
-    const difficulty = formData.get('status');
 
+    if(!image){
+      setError('Please select a file.');
+    } else{
+
+      const formData = new FormData(event.currentTarget);
+      const name = formData.get('name');
+      const ingredients = formData.get('ingredients');
+      const instructions = formData.get('instructions');
+      const time = formData.get('time');
+      const category = formData.get('category');
+      const difficulty = formData.get('status');
+  
+        
+      await handleUpload().then(url => {
       
-    await handleUpload().then(url => {
-      addRecipe({
-        name: `${name}`,
-        ingredients: `${ingredients}`,
-        instructions: `${instructions}`,
-        time: `${time}`,
-        category: `${category}`,
-        difficulty: `${difficulty}`,
-        checkedTags: checkedTags,
-        url: url as string,
+        addRecipe({
+          userId:userId,
+          name: `${name}`,
+          ingredients: `${ingredients}`,
+          instructions: `${instructions}`,
+          time: `${time}`,
+          category: `${category}`,
+          checkedTags: checkedTags,
+          url: url as string,
+        });
+      }).catch(error => {
+        console.error('Error during upload:', error);
       });
-    }).catch(error => {
-      console.error('Error during upload:', error);
-    });
-    
-    router.push("/")
+      
+      router.push("/")
+    }
+  
+  
    
   };
 
@@ -155,13 +181,14 @@ const handleUpload = () => {
     id="dropzone-file"
      type="file" 
      name="image"
+     accept="image/*"
      className="hidden"
       onChange={handleChange} 
-      required
+     
       />
 </label>
 </div> 
-
+{error &&(<div className='text-red-400'>{error}</div>)}
 {image && (
     <div className="mt-4">
       <p className="text-sm text-gray-500 dark:text-gray-400">Selected file: {fileName}</p>
@@ -258,7 +285,7 @@ const handleUpload = () => {
         <select
           id="category"
           name="category"
-          className="mb-4 peer block w-full cursor-pointer rounded-md border border-gray-200 py-2 pl-10 text-sm outline-2 placeholder:text-gray-500"
+          className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
           defaultValue=""
           aria-describedby="category-error"
           required
@@ -272,54 +299,11 @@ const handleUpload = () => {
             </option>
           ))}
         </select>
-        <BuildingStorefrontIcon className="pointer-events-none absolute left-3 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-gray-500" />
+        {/* <BuildingStorefrontIcon className="pointer-events-none absolute left-3 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-gray-500" /> */}
       </div>
 
    
-    <fieldset>
-      <legend className="mb-2 block text-sm font-medium">
-        Difficulty level
-      </legend>
-      <div className="mb-4 rounded-md border border-gray-200 bg-white px-[14px] py-3">
-        <div className="flex gap-4">
-          <div className="flex items-center">
-            <input
-              id="Hard"
-              name="status"
-              type="radio"
-              value="Hard"
-              className="h-4 w-4 cursor-pointer border-gray-300 bg-gray-100 text-gray-600 focus:ring-2"
-              aria-describedby="customer-error"
-              required
-
-            />
-            <label
-              htmlFor="pending"
-              className="ml-2 flex cursor-pointer items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-600"
-            >
-              Hard <ClockIcon className="h-4 w-4" />
-            </label>
-          </div>
-          <div className="flex items-center">
-            <input
-              id="Easy"
-              name="status"
-              type="radio"
-              value="Easy"
-              className="h-4 w-4 cursor-pointer border-gray-300 bg-gray-100 text-gray-600 focus:ring-2"
-              required
-            />
-            <label
-              htmlFor="paid"
-              className="ml-2 flex cursor-pointer items-center gap-1.5 rounded-full bg-green-500 px-3 py-1.5 text-xs font-medium text-white"
-            >
-              Easy <CheckIcon className="h-4 w-4" />
-            </label>
-          </div>
-        </div>
-      </div>
-    </fieldset>
-
+   
     <label htmlFor="tags" className="mb-2 block text-sm font-medium">
         Choose Tags
       </label>

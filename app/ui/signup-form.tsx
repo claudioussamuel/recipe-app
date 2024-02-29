@@ -20,9 +20,10 @@ export default function SingUpForm() {
     const form = event.currentTarget;
     const email = form.email.value;
     const password = form.password.value;
+    const name = form.username.value;
    
     try {
-      await signUp(email, password);
+      await signUp(email, password,name);
       router.push("/")
     } catch (error) {
       window.alert(error);

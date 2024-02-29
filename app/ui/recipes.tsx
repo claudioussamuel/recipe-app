@@ -25,7 +25,7 @@ export function GlobalRecipe( {initial} : GlobalRecipesProps) {
           <RecipeCard 
           key={x.id}
           category={x.category} 
-          difficulty={x.difficulty}
+          // difficulty={x.difficulty}
            id={x.id} 
            ingredients={x.ingredients}
             name={x.name} 

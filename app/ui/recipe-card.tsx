@@ -7,7 +7,7 @@ import { DeleteInvoice, UpdateInvoice } from "../(protected)/recipes/[id]/edit/c
 
 export function RecipeCard({
     category,
-    difficulty,
+   // difficulty,
     id,
     ingredients,
     name,
@@ -39,7 +39,7 @@ export function RecipeCard({
             href={`/`}
             className="hover:text-primary dark:text-primary-foreground"
           >
-            <p className="truncate text-sm font-semibold">{difficulty}</p>
+            {/* <p className="truncate text-sm font-semibold">{difficulty}</p> */}
           </Link>
           <div className="text-sm font-semibold">
          { Object.entries(checkedTags).map(([key, value], index) => (

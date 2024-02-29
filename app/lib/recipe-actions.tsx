@@ -1,22 +1,24 @@
 
+
+
 import { db } from "@/firebase/config";
 import { 
     collection,
      updateDoc,
       deleteDoc,
        doc, 
-       onSnapshot,
-        where, 
-        query, 
-        setDoc, 
         getDoc, 
-        DocumentData,
          getDocs,
-          DocumentSnapshot
+          DocumentSnapshot,
+          addDoc,
+          setDoc
          } from "firebase/firestore";
 import { RecipeData } from "./definitions";
 import { revalidatePath } from "next/cache";
 import { unstable_noStore as noStore } from 'next/cache';
+import { useUser } from "./auth";
+
+
 
 
 export const addRecipe = async (
@@ -26,7 +28,7 @@ export const addRecipe = async (
     instructions,
     time,
     category,
-    difficulty,
+    userId,
     checkedTags,
     url
 }:
@@ -36,23 +38,26 @@ export const addRecipe = async (
     instructions:string,
     time:string,
     category:string,
-    difficulty:string,
     checkedTags: {},
-    url:string
-}) => {
-    try {
-      
-        const docRef = doc(collection(db, "recipe"));
+    url:string,
+    userId:string,
 
-        const docId = docRef.id;
-        await setDoc(docRef, {
+}) => {
+
+   
+    try {
+        const docRef = doc(db, "users",userId);
+        const subcollectionRef = collection(docRef, 'recipe');
+        const newDoc = doc(subcollectionRef); 
+
+        const docId = newDoc.id;
+        await setDoc(newDoc, {
             id:`${docId}`,
             name,
             ingredients,
             instructions,
             time,
             category,
-            difficulty,
             checkedTags,
             url
         });
@@ -65,12 +70,9 @@ export const addRecipe = async (
 }
 
 export const deleteRecipe =  async (id: string) => {
+   
     try {
-        
-        console.log("Claudious again")
-        await deleteDoc(doc(db, "recipe", id));
-        
-       
+        await deleteDoc(doc(db,"users",id,"recipe", id));
     } catch (err) {
   
     }
@@ -78,11 +80,15 @@ export const deleteRecipe =  async (id: string) => {
 }
 
 
-export const updateRecipe = async (recipe: RecipeData) => {
+export const updateRecipe = async (recipe: RecipeData,userId:string) => {
+    
     try {
 
-        console.log(recipe);
-      await  updateDoc(doc(db,"recipe",recipe.id),recipe) 
+
+            console.log(recipe)
+        const parentDocRef = doc(db, "users", userId);
+        const docRef = doc(parentDocRef, "recipe", recipe.id);
+        await updateDoc(docRef,recipe );
      
     } catch (err) {
        
@@ -90,9 +96,10 @@ export const updateRecipe = async (recipe: RecipeData) => {
 }
 
 
-export async function  getRecipe(id:string)  {
+export async function  getRecipe(id:string,userId:string)  {
+    
     try {
-        const doRef = doc(db, "recipe", id);
+        const doRef = doc(db, "users",userId,"recipe",id);
 		const doSnap = await getDoc(doRef);
       
         if (doSnap.exists()) {
@@ -117,11 +124,14 @@ export async function  getRecipe(id:string)  {
 
 }
 
-export async function  getAllRecipe()  {
+export async function  getAllRecipe(userId:string)  {
     noStore();
-    const colRef = collection(db, "recipe");
+    
+    {
+    const parentDocRef = doc(db, "users", userId);
+    const colRef = collection(parentDocRef, "recipe");
     const snapshots = await getDocs(colRef);
-
+    
     const docs: RecipeData[] = snapshots.docs.map(
         (doc: DocumentSnapshot) => {
             const data = doc.data() as RecipeData;
@@ -129,9 +139,11 @@ export async function  getAllRecipe()  {
             return data;
         }
     );
+    
     return {
         recipes: docs,
-    };  
+    };
+}  
 }
 
 

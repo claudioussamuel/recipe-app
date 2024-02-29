@@ -10,6 +10,9 @@ import { Header } from "../ui/Header";
 import { Button } from "../ui/button";
 import { LucidePartyPopper } from "lucide-react";
 import { GlobalRecipe } from "../ui/recipes";
+import { useUser } from "../lib/auth";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth } from "@/firebase/config";
 
 var catigory =[
     {
@@ -40,24 +43,33 @@ export default function Home(){
         const category = formData.get("category") as string;
         const search = formData.get("search") as string;
 
-        if (category) {
-          setRecipeees(await searchCategory(recipeees, category)) 
+    //     if (category) {
+    //       setRecipeees(await searchCategory(recipeees, category)) 
           
-        }
+    //     }
         
-        else 
-        if(search){
-            setRecipeees(await searchRecipes(recipeees, search)) 
-        }
-    }
+    //     else 
+    //     if(search){
+    //         setRecipeees(await searchRecipes(recipeees, search)) 
+    //     }
+     }
 
+
+   
     useEffect(() => {
-        const fetchRecipes = async () => {
-          const { recipes } = await getAllRecipe();
-          setRecipeees(recipes);
-        };
+
+      const unsubscribe = onAuthStateChanged(auth, (user) => {
+        if (user) {
+          const fetchRecipes = async () => {
+            const { recipes } = await getAllRecipe(user.uid);
+            setRecipeees(recipes);
+          };
+          fetchRecipes();
+        }});
+
+        return () => unsubscribe();
     
-        fetchRecipes();
+       
       }, []);
 
    
@@ -141,7 +153,7 @@ export default function Home(){
                       The Best Place To Create Your Recipe
                     </h1>
                     <p className="max-w-xl text-center text-gray-500 lg:text-left lg:max-w-md">
-                    Lets&apos;  See What People Are Cooking
+                    Lets&apos;  See What You Are Cooking
                     </p>
                     <div className="flex justify-center mt-14 lg:justify-start">
                         <Link href={"/recipes/create"} className="text-white bg-green-500 font-medium rounded-lg px-5 py-4 text-center
